@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CivicGuardian - Community Crime Reporting</title>
+    <meta name="description" content="A community-driven crime reporting and safety app">
+    <meta name="theme-color" content="#1a237e">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgdmlld0JveD0iMCAwIDE5MiAxOTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxOTIiIGhlaWdodD0iMTkyIiByeD0iMjQiIGZpbGw9IiMxYTIzN2UiLz4KPHN2ZyB4PSI0OCIgeT0iNDgiIHdpZHRoPSI5NiIgaGVpZ2h0PSI5NiIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIj4KPHBhdGggZD0iTTEyIDJMMTMuMDkgOC4yNkwyMCA5TDEzLjA5IDE1Ljc0TDEyIDIyTDEwLjkxIDE1Ljc0TDQgOUwxMC45MSA4LjI2TDEyIDJaIiBmaWxsPSJ3aGl0ZSIvPgo8L3N2Zz4KPC9zdmc+">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <img src="CivicGuardian.png" alt="CivicGuardian Logo" class="logo-icon">
+                <span class="logo-text">CivicGuardian</span>
+            </div>
+            <div class="time" id="current-time">9:41</div>
+            <div class="nav-icons">
+                <i class="fas fa-bell"></i>
+                <i class="fas fa-user" id="admin-toggle"></i>
+            </div>
+        </header>
+
+        <!-- Home Screen -->
+        <div class="main-content" id="home-screen">
+            <button class="report-btn" id="report-incident-btn">
+                <i class="fas fa-plus-circle"></i> REPORT INCIDENT
+            </button>
+
+            <h2 class="section-title">
+                Live Map
+                <button class="emergency-btn" id="emergency-btn">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    EMERGENCY
+                </button>
+            </h2>
+            <div class="map-container">
+                <div id="map"></div>
+            </div>
+
+            <h2 class="section-title">Recent Reports</h2>
+            <div class="reports-list" id="reports-list">
+                <div class="report-card">
+                    <div class="report-type">
+                        <i class="fas fa-car-crash" style="color: #e53935;"></i> Traffic Accident
+                    </div>
+                    <div class="report-desc">Two vehicles collided at the intersection. No serious injuries reported.</div>
+                    <div class="report-meta">
+                        <span>15 min ago</span>
+                        <span>0.5 miles away</span>
+                    </div>
+                </div>
+                <div class="report-card">
+                    <div class="report-type">
+                        <i class="fas fa-shield-alt" style="color: #1a237e;"></i> Suspicious Activity
+                    </div>
+                    <div class="report-desc">Unidentified person checking car doors in the neighborhood.</div>
+                    <div class="report-meta">
+                        <span>2 hours ago</span>
+                        <span>0.8 miles away</span>
+                    </div>
+                </div>
+                <div class="report-card">
+                    <div class="report-type">
+                        <i class="fas fa-traffic-light" style="color: #ff9800;"></i> Broken Traffic Light
+                    </div>
+                    <div class="report-desc">Traffic light at Main St and 5th Ave not working properly.</div>
+                    <div class="report-meta">
+                        <span>5 hours ago</span>
+                        <span>1.2 miles away</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Report Form -->
+        <div class="form-container" id="report-form">
+            <h2 class="form-title">Report Incident</h2>
+            <form id="incident-form">
+                <div class="form-group">
+                    <label class="form-label">Incident Type</label>
+                    <select class="form-select" id="incident-type" required>
+                        <option value="">Select incident type</option>
+                        <option value="theft">Theft</option>
+                        <option value="vandalism">Vandalism</option>
+                        <option value="accident">Traffic Accident</option>
+                        <option value="suspicious">Suspicious Activity</option>
+                        <option value="hazard">Public Hazard</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Description</label>
+                    <textarea class="form-textarea" id="incident-description" placeholder="Provide details about the incident..." required></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Location</label>
+                    <input type="text" class="form-select" id="incident-location" placeholder="Enter location or tap to use current location" readonly>
+                    <button type="button" class="btn btn-secondary" id="get-location-btn" style="margin-top: 10px;">
+                        <i class="fas fa-map-marker-alt"></i> Use Current Location
+                    </button>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Upload Media (Optional)</label>
+                    <div class="upload-area" id="upload-area">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <p>Tap to upload photos or videos</p>
+                        <input type="file" id="media-upload" accept="image/*,video/*" multiple style="display: none;">
+                    </div>
+                    <div id="uploaded-files" style="display: none;"></div>
+                </div>
+                <div class="form-buttons">
+                    <button type="button" class="btn btn-secondary" id="cancel-report">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="submit-report">Submit Report</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Admin Dashboard -->
+        <div class="admin-dashboard" id="admin-dashboard">
+            <h2 class="section-title">Incident Analytics</h2>
+            <div class="stats-container">
+                <div class="stat-card">
+                    <div class="stat-value" id="reports-today">24</div>
+                    <div class="stat-label">Reports Today</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="response-rate">78%</div>
+                    <div class="stat-label">Response Rate</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="pending-count">12</div>
+                    <div class="stat-label">Pending</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="resolved-count">9</div>
+                    <div class="stat-label">Resolved</div>
+                </div>
+            </div>
+            
+            <h2 class="section-title">Incident Types</h2>
+            <div class="chart-container" id="incident-chart">
+                <canvas id="incident-chart-canvas" width="400" height="200"></canvas>
+            </div>
+            
+            <h2 class="section-title">Response Tracker</h2>
+            <div class="table-container">
+                <table class="incidents-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Type</th>
+                            <th>Location</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="incidents-table-body">
+                        <tr>
+                            <td>#1256</td>
+                            <td>Theft</td>
+                            <td>Main St</td>
+                            <td><span class="status-badge status-pending">Pending</span></td>
+                            <td><button class="btn btn-primary" style="padding: 5px 10px; font-size: 0.8rem;">View</button></td>
+                        </tr>
+                        <tr>
+                            <td>#1255</td>
+                            <td>Vandalism</td>
+                            <td>Park Ave</td>
+                            <td><span class="status-badge status-in-progress">In Progress</span></td>
+                            <td><button class="btn btn-primary" style="padding: 5px 10px; font-size: 0.8rem;">View</button></td>
+                        </tr>
+                        <tr>
+                            <td>#1254</td>
+                            <td>Accident</td>
+                            <td>5th Avenue</td>
+                            <td><span class="status-badge status-resolved">Resolved</span></td>
+                            <td><button class="btn btn-primary" style="padding: 5px 10px; font-size: 0.8rem;">View</button></td>
+                        </tr>
+                        <tr>
+                            <td>#1253</td>
+                            <td>Suspicious Activity</td>
+                            <td>Oak Street</td>
+                            <td><span class="status-badge status-resolved">Resolved</span></td>
+                            <td><button class="btn btn-primary" style="padding: 5px 10px; font-size: 0.8rem;">View</button></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Map Screen -->
+        <div class="screen-container" id="map-screen">
+            <h2 class="section-title">Full Map View</h2>
+            <div class="map-container" style="height: calc(100vh - 200px);">
+                <div id="map-full"></div>
+                <div class="map-controls">
+                    <button class="map-control-btn" id="refresh-map" title="Refresh Map">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                    <button class="map-control-btn" id="center-location" title="Center on Location">
+                        <i class="fas fa-crosshairs"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reports Screen -->
+        <div class="screen-container" id="reports-screen">
+            <div class="reports-header">
+                <h2 class="section-title">All Reports</h2>
+                <button class="filter-btn" id="filter-reports">
+                    <i class="fas fa-filter"></i> Filter
+                </button>
+            </div>
+            <div class="reports-list" id="reports-list-full"></div>
+        </div>
+
+        <!-- Notifications Screen -->
+        <div class="screen-container" id="notifications-screen">
+            <div class="notifications-header">
+                <h2 class="section-title">Notifications</h2>
+                <button class="btn btn-secondary" id="mark-all-read">
+                    <i class="fas fa-check-double"></i> Mark All Read
+                </button>
+            </div>
+            <div class="notifications-list" id="notifications-list"></div>
+        </div>
+
+        <!-- Profile Screen -->
+        <div class="screen-container" id="profile-screen">
+            <div class="profile-header">
+                <div class="profile-avatar">
+                    <i class="fas fa-user"></i>
+                </div>
+                <div class="profile-name">John Doe</div>
+                <div class="profile-email">john.doe@example.com</div>
+                <div class="profile-stats">
+                    <div class="profile-stat">
+                        <div class="profile-stat-value">12</div>
+                        <div class="profile-stat-label">Reports</div>
+                    </div>
+                    <div class="profile-stat">
+                        <div class="profile-stat-value">8</div>
+                        <div class="profile-stat-label">Resolved</div>
+                    </div>
+                    <div class="profile-stat">
+                        <div class="profile-stat-value">4</div>
+                        <div class="profile-stat-label">Pending</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="profile-menu">
+                <div class="profile-menu-item" id="edit-profile">
+                    <i class="fas fa-edit"></i>
+                    <span>Edit Profile</span>
+                </div>
+                <div class="profile-menu-item" id="settings">
+                    <i class="fas fa-cog"></i>
+                    <span>Settings</span>
+                </div>
+                <div class="profile-menu-item" id="help-support">
+                    <i class="fas fa-question-circle"></i>
+                    <span>Help & Support</span>
+                </div>
+                <div class="profile-menu-item" id="about">
+                    <i class="fas fa-info-circle"></i>
+                    <span>About</span>
+                </div>
+                <div class="profile-menu-item" id="logout">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Logout</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Navigation -->
+        <div class="bottom-nav">
+            <div class="nav-item active" data-screen="home">
+                <i class="fas fa-home"></i>
+                <div class="nav-label">Home</div>
+            </div>
+            <div class="nav-item" data-screen="map">
+                <i class="fas fa-map"></i>
+                <div class="nav-label">Map</div>
+            </div>
+            <div class="nav-item" data-screen="reports">
+                <i class="fas fa-list"></i>
+                <div class="nav-label">Reports</div>
+            </div>
+            <div class="nav-item" data-screen="notifications">
+                <i class="fas fa-bell"></i>
+                <div class="nav-label">Alerts</div>
+            </div>
+            <div class="nav-item" data-screen="profile">
+                <i class="fas fa-user"></i>
+                <div class="nav-label">Profile</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
