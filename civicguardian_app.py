@@ -284,7 +284,7 @@ elif page == "🗺️ Map":
     
     with col2:
         # Full map
-        m = folium.Map(location=[40.7128, -74.0060], zoom_start=13)
+        m = folium.Map(location=[9.337060, 125.969800], zoom_start=13)
         
         # Add all incident markers
         for incident in st.session_state.incidents:
