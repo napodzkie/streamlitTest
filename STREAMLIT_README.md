@@ -40,6 +40,44 @@ A community-driven crime reporting and safety app built with Streamlit.
 
 3. **Open your browser to:** `http://localhost:8501`
 
+## Database (PostgreSQL) integration
+
+This Streamlit app can persist incidents, reports and notifications to a PostgreSQL database when configured.
+
+1. Start a local Postgres instance (Docker example):
+
+```powershell
+# runs a local postgres DB exposed on port 5432
+docker run --name civicguardian-postgres -e POSTGRES_PASSWORD=changeme -e POSTGRES_USER=postgres -e POSTGRES_DB=civicguardian -p 5432:5432 -d postgres:15
+```
+
+2. Create a `.env` in the project root or set the `DATABASE_URL` environment variable. Example `.env`:
+
+```
+DATABASE_URL=postgresql://postgres:changeme@localhost:5432/civicguardian
+```
+
+3. If you're deploying to Streamlit Cloud you should use Streamlit Secrets instead of a `.env` file. In the Streamlit app settings add the DATABASE_URL secret (replace the placeholder password):
+
+```toml
+# In Streamlit Cloud: App -> Settings -> Secrets
+DATABASE_URL = "postgresql://postgres:YOUR_REAL_PASSWORD@db.ypzycptidfpqxikjcwxy.supabase.co:5432/postgres?sslmode=require"
+```
+
+The app code already looks for a `DATABASE_URL` env var and will also read `st.secrets['DATABASE_URL']` when running on Streamlit Cloud.
+
+4. The app will pick up the `.env` automatically (via python-dotenv) or read Streamlit secrets, and create the required tables on first run.
+
+4. Run the app normally:
+
+```powershell
+pip install -r requirements.txt
+streamlit run civicguardian_app.py
+```
+
+If your environment doesn't have Docker, install PostgreSQL locally and set `DATABASE_URL` accordingly.
+
+## Features Overview
 ## Features Overview
 
 ### 🏠 Home Page

@@ -8,6 +8,7 @@ import json
 import folium
 from streamlit_folium import st_folium
 import time
+import db
 
 # Page configuration
 st.set_page_config(
@@ -90,8 +91,18 @@ incident_icons = {
 }
 
 # Initialize session state
+DB_ENABLED = db.init_db()
+
 if 'incidents' not in st.session_state:
-    st.session_state.incidents = [
+    # Load incidents from DB when available, otherwise fall back to sample data
+    if DB_ENABLED:
+        try:
+            st.session_state.incidents = db.get_incidents() or []
+        except Exception as e:
+            st.warning(f"Warning: failed to load incidents from DB: {e}")
+            st.session_state.incidents = []
+    else:
+        st.session_state.incidents = [
         {'id': 1, 'lat': 40.7128, 'lng': -74.0060, 'type': 'theft', 'desc': 'Car break-in', 'time': '15 min ago', 'distance': '0.5 miles', 'timestamp': datetime.now() - timedelta(minutes=15)},
         {'id': 2, 'lat': 40.7180, 'lng': -74.0100, 'type': 'vandalism', 'desc': 'Graffiti on building', 'time': '2 hours ago', 'distance': '0.8 miles', 'timestamp': datetime.now() - timedelta(hours=2)},
         {'id': 3, 'lat': 40.7080, 'lng': -74.0050, 'type': 'accident', 'desc': 'Two-car collision', 'time': '5 hours ago', 'distance': '1.2 miles', 'timestamp': datetime.now() - timedelta(hours=5)},
@@ -100,10 +111,25 @@ if 'incidents' not in st.session_state:
     ]
 
 if 'reports' not in st.session_state:
-    st.session_state.reports = []
+    # Load persisted reports from DB if enabled
+    if DB_ENABLED:
+        try:
+            st.session_state.reports = db.get_reports() or []
+        except Exception as e:
+            st.warning(f"Warning: failed to load reports from DB: {e}")
+            st.session_state.reports = []
+    else:
+        st.session_state.reports = []
 
 if 'notifications' not in st.session_state:
-    st.session_state.notifications = [
+    if DB_ENABLED:
+        try:
+            st.session_state.notifications = db.get_notifications() or []
+        except Exception as e:
+            st.warning(f"Warning: failed to load notifications from DB: {e}")
+            st.session_state.notifications = []
+    else:
+        st.session_state.notifications = [
         {'id': 1, 'title': 'New Incident Near You', 'desc': 'A traffic accident was reported 0.3 miles from your location.', 'time': '2 minutes ago', 'unread': True, 'timestamp': datetime.now() - timedelta(minutes=2)},
         {'id': 2, 'title': 'Report Resolved', 'desc': 'Your report #1256 has been resolved by local authorities.', 'time': '1 hour ago', 'unread': False, 'timestamp': datetime.now() - timedelta(hours=1)},
         {'id': 3, 'title': 'App Update Available', 'desc': 'Update to version 2.1.0 is now available with new features.', 'time': '3 hours ago', 'unread': False, 'timestamp': datetime.now() - timedelta(hours=3)},
@@ -121,6 +147,12 @@ st.markdown("""
 # Sidebar navigation
 st.sidebar.title("Navigation")
 page = st.sidebar.selectbox("Choose a page", ["🏠 Home", "🗺️ Map", "📋 Reports", "🔔 Notifications", "👤 Profile", "📊 Admin Dashboard"])
+
+# Show DB status in the sidebar so developers can see whether persistence is enabled
+if DB_ENABLED:
+    st.sidebar.success("Database: connected")
+else:
+    st.sidebar.info("Database: not configured (using in-memory session state)")
 
 # Home Page
 if page == "🏠 Home":
@@ -142,6 +174,12 @@ if page == "🏠 Home":
                 'unread': True,
                 'timestamp': datetime.now()
             }
+            # Persist notification to DB if enabled
+            if DB_ENABLED:
+                try:
+                    db.add_notification(emergency_notification['title'], emergency_notification['desc'], emergency_notification['time'], unread=True)
+                except Exception as e:
+                    st.warning(f"Warning: failed to persist notification: {e}")
             st.session_state.notifications.insert(0, emergency_notification)
             st.rerun()
     
@@ -188,15 +226,30 @@ if page == "🏠 Home":
             with col2:
                 if st.form_submit_button("✅ Submit Report"):
                     if incident_type and description:
+                        # Persist to DB when available, otherwise append to session
+                        if DB_ENABLED:
+                            try:
+                                report_id = db.add_report(incident_type, description, location or 'Current Location')
+                                # reload reports
+                                st.session_state.reports = db.get_reports() or []
+                            except Exception as e:
+                                st.error(f"Failed to save report to DB: {e}")
+                                report_id = None
+                        else:
+                            report_id = len(st.session_state.reports) + 1
+
                         new_report = {
-                            'id': len(st.session_state.reports) + 1,
+                            'id': report_id,
                             'type': incident_type,
                             'description': description,
                             'location': location or 'Current Location',
                             'timestamp': datetime.now(),
                             'status': 'pending'
                         }
-                        st.session_state.reports.append(new_report)
+
+                        if not DB_ENABLED:
+                            st.session_state.reports.append(new_report)
+
                         st.session_state.show_report_form = False
                         st.success("✅ Incident reported successfully!")
                         st.rerun()
@@ -279,6 +332,13 @@ elif page == "🔔 Notifications":
     
     with col2:
         if st.button("✅ Mark All Read"):
+            # Persist to DB if enabled
+            if DB_ENABLED:
+                try:
+                    db.mark_all_notifications_read()
+                except Exception as e:
+                    st.warning(f"Warning: failed to mark all notifications read in DB: {e}")
+
             for notification in st.session_state.notifications:
                 notification['unread'] = False
             st.success("All notifications marked as read!")

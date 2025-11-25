@@ -73,6 +73,15 @@ civic-guardian/
 └── README.md          # This documentation
 ```
 
+Note: This repository also contains a Streamlit-based Python app at `civicguardian_app.py` which can persist data into PostgreSQL when configured. The static PWA front-end (`index.html`) keeps data in LocalStorage and does not require a database.
+
+If you want to use a managed database such as Supabase, create a database in Supabase and copy the connection URI (example below). Place it in a `.env` file as `DATABASE_URL` or put it in Streamlit Cloud Secrets.
+
+Example Supabase URI (replace password):
+```
+postgresql://postgres:YOUR_PASSWORD@db.ypzycptidfpqxikjcwxy.supabase.co:5432/postgres?sslmode=require
+```
+
 ## Key Features Explained
 
 ### Geolocation Integration

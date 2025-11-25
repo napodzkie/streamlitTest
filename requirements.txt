@@ -3,3 +3,8 @@ pandas>=1.5.0
 plotly>=5.15.0
 folium>=0.14.0
 streamlit-folium>=0.13.0
+
+# PostgreSQL and DB tooling
+SQLAlchemy>=1.4.0
+psycopg2-binary>=2.9.0
+python-dotenv>=1.0.0

@@ -1,0 +1,10 @@
+# Local environment and secret files
+.env
+.streamlit/secrets.toml
+
+# Python artifacts
+__pycache__/
+*.py[cod]
+
+# Virtual environment
+.venv/
