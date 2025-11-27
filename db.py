@@ -4,7 +4,7 @@ from sqlalchemy.orm import declarative_base, sessionmaker
 from datetime import datetime
 from typing import List, Dict, Optional
 from dotenv import load_dotenv
-import streamlit as _st
+import streamlit as st
 
 
 load_dotenv()
