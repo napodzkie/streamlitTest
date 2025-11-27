@@ -11,7 +11,8 @@ load_dotenv()
 
 # Prefer explicit env var. If running on Streamlit Cloud, the secret can be stored
 # in `st.secrets['DATABASE_URL']` or `st.secrets['database']['url']`.
-DATABASE_URL = None
+DATABASE_URL = None 
+print("DATABASE_URL: ", DATABASE_URL)
 
 # 1. Try Streamlit secrets
 if 'database' in st.secrets:
