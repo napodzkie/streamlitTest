@@ -4,22 +4,22 @@ from sqlalchemy.orm import declarative_base, sessionmaker
 from datetime import datetime
 from typing import List, Dict, Optional
 from dotenv import load_dotenv
+import streamlit as _st
+
 
 load_dotenv()
 
 # Prefer explicit env var. If running on Streamlit Cloud, the secret can be stored
 # in `st.secrets['DATABASE_URL']` or `st.secrets['database']['url']`.
-DATABASE_URL = os.environ.get('DATABASE_URL')
+DATABASE_URL = None
 
-try:
-    # If Streamlit is available (deployed on streamlit cloud) look for secrets
-    import streamlit as _st
-    if not DATABASE_URL:
-        # Try two typical secret locations
-        DATABASE_URL = _st.secrets.get('DATABASE_URL') or _st.secrets.get('database', {}).get('url')
-except Exception:
-    # Not running inside Streamlit environment or no secrets found — continue
-    pass
+# 1. Try Streamlit secrets
+if 'database' in st.secrets:
+    DATABASE_URL = st.secrets['database'].get('url')
+
+# 2. Fallback to environment variable
+if not DATABASE_URL:
+    DATABASE_URL = os.environ.get('DATABASE_URL')
 
 # If this looks like a Supabase endpoint and sslmode not provided, enforce SSL.
 if DATABASE_URL and 'supabase.co' in DATABASE_URL and 'sslmode' not in DATABASE_URL:
@@ -77,7 +77,8 @@ def _engine_and_session():
         future=True,
         pool_size=5,
         max_overflow=10,
-        pool_pre_ping=True
+        pool_pre_ping=True,
+        connect_args={"sslmode": "require"}
     )
     SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
     return engine, SessionLocal
