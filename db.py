@@ -1,35 +1,41 @@
 import os
-from sqlalchemy import (create_engine, Column, Integer, String, DateTime, Text)
+from sqlalchemy import create_engine, Column, Integer, String, DateTime, Text
 from sqlalchemy.orm import declarative_base, sessionmaker
 from datetime import datetime
 from typing import List, Dict, Optional
 from dotenv import load_dotenv
 import streamlit as st
 
-
 load_dotenv()
 
-# Prefer explicit env var. If running on Streamlit Cloud, the secret can be stored
-# in `st.secrets['DATABASE_URL']` or `st.secrets['database']['url']`.
-DATABASE_URL = None 
-print("DATABASE_URL: ", DATABASE_URL)
+# Try loading secrets safely
+def load_database_url():
+    # 1. Streamlit Cloud secrets
+    try:
+        if "database" in st.secrets:
+            return st.secrets["database"]["url"]
+    except:
+        pass
 
-# 1. Try Streamlit secrets
-if 'database' in st.secrets:
-    DATABASE_URL = st.secrets['database'].get('url')
+    # 2. Environment variable (local dev)
+    env_url = os.environ.get("DATABASE_URL")
+    if env_url:
+        return env_url
 
-# 2. Fallback to environment variable
-if not DATABASE_URL:
-    DATABASE_URL = os.environ.get('DATABASE_URL')
+    return None
 
-# If this looks like a Supabase endpoint and sslmode not provided, enforce SSL.
-if DATABASE_URL and 'supabase.co' in DATABASE_URL and 'sslmode' not in DATABASE_URL:
-    if '?' in DATABASE_URL:
-        DATABASE_URL = DATABASE_URL + '&sslmode=require'
+DATABASE_URL = load_database_url()
+print("LOADED DATABASE_URL:", DATABASE_URL)
+
+# Ensure SSL for Supabase
+if DATABASE_URL and "supabase.co" in DATABASE_URL and "sslmode" not in DATABASE_URL:
+    if "?" in DATABASE_URL:
+        DATABASE_URL += "&sslmode=require"
     else:
-        DATABASE_URL = DATABASE_URL + '?sslmode=require'
+        DATABASE_URL += "?sslmode=require"
 
 Base = declarative_base()
+
 
 
 class Incident(Base):
