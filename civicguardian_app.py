@@ -28,7 +28,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # --- Constants and categories
-DEFAULT_LAT, DEFAULT_LNG = 9.337060, 125.969800
+DEFAULT_LAT, DEFAULT_LNG = 9.336040891463876, 125.97721784390745
 CATEGORIES = ["theft", "vandalism", "accident", "suspicious", "hazard", "other"]
 incident_colors = {'theft':'red','vandalism':'orange','accident':'blue','suspicious':'green','hazard':'yellow'}
 incident_icons = {'theft':'💎','vandalism':'🎨','accident':'🚗','suspicious':'👤','hazard':'⚠️'}
